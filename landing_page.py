@@ -7,7 +7,7 @@
 import datetime as dt
 import smtplib
 from email.mime.text import MIMEText
-from insightly import Insightly
+from InsightlyPython import insightly as Insightly
 
 
 class Landing_Page():
@@ -23,7 +23,13 @@ class Landing_Page():
     _insightly = None
 
     def __init__(self):
-        self._insightly = Insightly(debug=False)
+        try:
+            f = open('apikey.txt', 'r')
+            apikey = f.read().rstrip()
+            f.close()
+        except:
+            raise Exception('Missing apikey.txt file')
+        self._insightly = Insightly.Insightly(apikey=apikey, debug=False)
 
 
     def do_form(self, form_fields):
