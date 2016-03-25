@@ -1,0 +1,14 @@
+url: https://hens-teeth.net/thank-you/magnificent.html
+
+thank you message:
+%FIRSTNAME,
+
+Thank you for requesting our magnificent ebook.
+You can download it from %URL
+
+If you have any questions, I am here to help you, 24x7.
+As they say in the biz, "here's a quarter; call someone who cares."
+
+Sincerely,
+A. Nony Mouse, CMO
+Rude Company, Inc.

@@ -13,7 +13,9 @@ When the form is submitted, the module does the following:
 Usage
 =====
 
-Create a form with at least these four input fields:
+Put your Insightly API key in a file named `apikey.txt` in the same directory as `LandingPage.py`
+
+Create an HTML form with at least these four input fields:
 
 * first_name
 * last_name

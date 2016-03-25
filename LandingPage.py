@@ -21,6 +21,8 @@ class Landing_Page():
     """
 
     _insightly = None
+    _account_owner = None
+
 
     def __init__(self):
         try:
@@ -30,6 +32,7 @@ class Landing_Page():
         except:
             raise Exception('Missing apikey.txt file')
         self._insightly = Insightly.Insightly(apikey=apikey, debug=False)
+        self._account_owner = self._insightly.ownerinfo()
 
 
     def do_form(self, form_fields):
@@ -41,34 +44,25 @@ class Landing_Page():
         :return: None
         """
 
+        # preserve original data (for logging) and pull out some key data
         original_form_fields = form_fields.copy()
-
-        # create/update the contact
         email = form_fields['email']
         del form_fields['email']
-        if 'form_name' in form_fields:
-            form_name = form_fields['form_name']
-            del form_fields['form_name']
-        else:
-            form_name = ''
+        form_name = form_fields['form_name']
+        del form_fields['form_name']
+
         contact = self._upsert_contact(email, form_fields)
 
-        # create a note, recording the original form fields
-        title = 'Submitted form ' + form_name + ' at ' + dt.datetime.today().strftime("%m/%d/%Y %I:%M:%S%p %Z")
-        kv_pairs = []
-        for key in original_form_fields.keys():
-            kv_pairs.append('<p>%s: %s</p>' % (key, original_form_fields[key]))
-        if 0 < len(kv_pairs):
-            body = ''.join(kv_pairs)
-        else:
-            body = None
-        note = self._add_note(contact['CONTACT_ID'], title, body)
+        note = self._add_note(contact['CONTACT_ID'], form_name, original_form_fields)
 
-        self._notify_users(contact)
+        self._notify_users(contact, form_name)
+
+        self._thank_you_email(form_name)
 
         return contact
 
-    def _add_note(self, contact_id, title, body):
+
+    def _add_note(self, contact_id, form_name, original_form_fields):
         """
         add a note to a contact
         :param contact_id:
@@ -76,29 +70,43 @@ class Landing_Page():
         :param body:
         :return: note
         """
+        title = 'Submitted form ' + form_name + ' at ' + dt.datetime.today().strftime("%m/%d/%Y %I:%M:%S%p %Z")
+        kv_pairs = []
+        for key in original_form_fields.keys():
+            kv_pairs.append('<p>%s: %s</p>' % (key, original_form_fields[key]))
+        body = ''.join(kv_pairs)
+
         object_graph = {
             'TITLE': title,
             'BODY': body,
         }
         return self._insightly.create('CONTACTS', object_graph, id=contact_id, sub_type='NOTES')
 
-    def _notify_users(self, contact):
+
+    def _notify_users(self, contact, form_name):
         """
         notify all Insightly users about the form submissions
         :param contact:
         :param users:
         :return: None
         """
-        msg = MIMEText('''There is a new form submission for contact %s %s. Be sure to check it out.''' % (contact['FIRST_NAME'], contact['LAST_NAME']))
+        msg = MIMEText('''Contact %s %s submitted form %s. Be sure to check it out.''' % (contact['FIRST_NAME'], contact['LAST_NAME'], form_name))
         to_list = []
         for u in self._insightly.users:
             to_list.append(u['EMAIL_ADDRESS'])
-        msg['From'] = 'art@hens-teeth.net'
+        msg['From'] = self._account_owner['email']
         msg['To'] = ', '.join(to_list)
-        msg['Subject'] = 'Test notification'
+        msg['Subject'] = 'Form submission: %s' % form_name
         s = smtplib.SMTP('localhost')
         s.sendmail(msg['From'], to_list, msg.as_string())
         s.quit()
+
+
+    def _thank_you_email(self, form_name):
+        """
+        Send a thank-you email to the contact
+        """
+        return
 
 
     def _upsert_contact(self, email, values):
@@ -180,7 +188,7 @@ if '__main__' == __name__:
         'website': 'www.hens-teeth.net',
         'company': "Hen's Teeth Network",
         'comments': 'Can you build a website for me?\nAnd do it quick??',
-        'form_name': 'The Test Form',
+        'form_name': 'TestForm1',
     }
     lp = Landing_Page()
     c = lp.do_form(form_fields)
