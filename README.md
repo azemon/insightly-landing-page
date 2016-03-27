@@ -31,6 +31,8 @@ Everything else is copied into the Background attribute.
 * email -> Contact's Email (Work)
 * phone -> Contact's Phone (Work)
 * website -> Contact's Website (Work)
+* the email's domain -> Organization's Name
+* the email's domain -> Organization's Domain
 
 Dependencies
 ============
