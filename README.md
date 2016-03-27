@@ -4,7 +4,8 @@ Landing Page CGI Script for Insightly
 This Python script processes forms on landing pages, interacting with Insightly and with the person who submits the form. 
 When the form is submitted, the module does the following:
 
-1. update/insert a contact
+1. if it does not exist, create an organization
+1. update/insert a contact and link to the organization
 1. add a note to the contact, indicating which form was submitting
 1. notify all Insightly users
 1. send a thank-you email to the form submitter

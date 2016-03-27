@@ -13,11 +13,12 @@ from InsightlyPython import insightly as Insightly
 class Landing_Page():
     """
     Support a form on a website landing page. When the form on the page gets submitted, do:
-        1) update/insert a contact
-        2) add a note to the contact, indicating which form was submitting
-        3) notify all Insightly users
-        4) send a thank-you email to the form submitter
-        5) redirect the browser to the thank-you page URL
+        1) if it does not exist, create an organization
+        2) update/insert a contact and link to the organization
+        3) add a note to the contact, indicating which form was submitting
+        4) notify all Insightly users
+        5) send a thank-you email to the form submitter
+        6) redirect the browser to the thank-you page URL
     """
 
     _insightly = None
@@ -51,7 +52,9 @@ class Landing_Page():
         form_name = form_fields['form_name']
         del form_fields['form_name']
 
-        contact = self._upsert_contact(email, form_fields)
+        organization = self._get_organization(email)
+
+        contact = self._upsert_contact(email, form_fields, organization)
 
         note = self._add_note(contact['CONTACT_ID'], form_name, original_form_fields)
 
@@ -83,6 +86,35 @@ class Landing_Page():
         return self._insightly.create('CONTACTS', object_graph, id=contact_id, sub_type='NOTES')
 
 
+    def _get_organization(self, email):
+        """
+        get an organization from the email domain,
+        create it if it does not exist
+        :param email: contact's email address
+        :return: organization
+        """
+        (username, domain) = email.split('@')
+        organization = self._insightly.search('Organisations', 'email_domain=%s' % domain)
+
+        if 0 == len(organization):
+            # organisation does not exist; create it
+            object_graph = {
+                'ORGANISATION_NAME': domain,
+                "CONTACTINFOS": [
+                    {
+                        "TYPE": "EMAILDOMAIN",
+                        "LABEL": "Work",
+                        "DETAIL": domain
+                    }
+                ],
+            }
+            organization = self._insightly.create('Organisations', object_graph=object_graph)
+        else:
+            # search returns a list and we want the first element
+            organization = organization[0]
+        return organization
+
+
     def _notify_users(self, contact, form_name):
         """
         notify all Insightly users about the form submissions
@@ -109,7 +141,7 @@ class Landing_Page():
         return
 
 
-    def _upsert_contact(self, email, values):
+    def _upsert_contact(self, email, values, organization):
         """
         Update and existing contact or Insert a new one
         :param email: unique key for the contact
@@ -149,7 +181,12 @@ class Landing_Page():
                 {
                     'TAG_NAME': 'Web Contact',
                 }
-            ]
+            ],
+            "LINKS": [
+                {
+                    "ORGANISATION_ID": organization["ORGANISATION_ID"],
+                }
+            ],
         }
 
         # construct a "background" string of any remaining values
