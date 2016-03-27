@@ -4,12 +4,14 @@ Landing Page CGI Script for Insightly
 This Python script processes forms on landing pages, interacting with Insightly and with the person who submits the form. 
 When the form is submitted, the module does the following:
 
-1. if it does not exist, create an organization
+1. create an organization, iff it does not already exist
 1. update/insert a contact and link to the organization
-1. add a note to the contact, indicating which form was submitting
+1. add a note to the contact, indicating which form was submitted
 1. notify all Insightly users
 1. send a thank-you email to the form submitter
 1. redirect the browser to the thank-you page URL
+
+I am not associated with [Insightly, Inc.](https://www.insightly.com/), other than as a user of their CRM.
 
 Usage
 =====
@@ -34,10 +36,12 @@ Everything else is copied into the Background attribute.
 * the email's domain -> Organization's Name
 * the email's domain -> Organization's Domain
 
+In the `forms` directory, create a file named `FORM_NAME.txt` (same as the contents of the form_name hidden field). Put the thank-you page URL and the text of the thank-you email into this file.
+
 Dependencies
 ============
 
-Landing-page depends on Insightly's Python SDK, included here as a submodule.
+Landing-page depends on Insightly's Python SDK, included here as a submodule. See the [Insightly API community discussion](https://support.insight.ly/hc/en-us/community/topics/200257170-Insightly-API)
 
 License
 =======
