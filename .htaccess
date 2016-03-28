@@ -1,4 +1,12 @@
+Options +ExecCGI -Indexes
+AddHandler cgi-script .py
+
 <Files *.txt>
-Order deny,allow
-Deny from all
+    Order deny,allow
+    Deny from all
+</Files>
+
+<Files *.pyc>
+    Order deny,allow
+    Deny from all
 </Files>
