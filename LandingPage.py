@@ -3,7 +3,6 @@
 # Author: Art Zemon art@zemon.name https://cheerfulcurmudgeon.com/
 # License: This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License http://creativecommons.org/licenses/by-sa/4.0/
 
-# todo: add company name to organization
 # todo: add a list of email domains for which organizations will not be created
 
 import datetime as dt
@@ -27,6 +26,7 @@ class Landing_Page:
     _account_owner = None
 
     _form_data_directory = 'forms'
+    _form_data = None # will be a dict with elements: url, subject, message
 
     # debugging flags
     _no_notification_mail = False
@@ -59,7 +59,9 @@ class Landing_Page:
         form_name = form_fields['form_name']
         del form_fields['form_name']
 
-        organization = self._get_organization(email)
+        self._read_form_data(form_name)
+
+        organization = self._get_organization(email, form_fields)
 
         contact = self._upsert_contact(email, form_fields, organization)
 
@@ -67,7 +69,7 @@ class Landing_Page:
 
         self._notify_users(contact, form_name)
 
-        self._send_thank_you_email(contact, email, form_name)
+        self._send_thank_you_email(contact, email)
 
         return contact
 
@@ -91,7 +93,7 @@ class Landing_Page:
         return self._insightly.create('CONTACTS', object_graph, id=contact_id, sub_type='NOTES')
 
 
-    def _get_organization(self, email):
+    def _get_organization(self, email, form_fields):
         """
         get an organization from the email domain,
         create it if it does not exist
@@ -99,12 +101,16 @@ class Landing_Page:
         :return: organization
         """
         (username, domain) = email.split('@')
-        organization = self._insightly.search('Organisations', 'email_domain=%s' % domain)
+        organization = self._insightly.search('Organisations', 'email_domain={domain}'.format(domain=domain))
 
         if 0 == len(organization):
             # organisation does not exist; create it
+            try:
+                org_name = form_fields['company']
+            except:
+                org_name = domain
             object_graph = {
-                'ORGANISATION_NAME': domain,
+                'ORGANISATION_NAME': org_name,
                 "CONTACTINFOS": [
                     {
                         "TYPE": "EMAILDOMAIN",
@@ -143,34 +149,44 @@ class Landing_Page:
         s.quit()
 
 
-    def _send_thank_you_email(self, contact, contact_email, form_name):
+    def _read_form_data(self, form_name):
+        # get data about the form
+        filename = '{directory}/{basename}.txt'.format(directory=self._form_data_directory, basename=form_name)
+        with open(filename, 'r') as f:
+            raw_form_data = f.read()
+        try:
+            exec raw_form_data
+            # url contains the thank-you page URL
+            # subject contains the email subject template
+            # message contains the email message template
+            self._form_data = {
+                'url': url.strip(),
+                'subject': subject.strip(),
+                'message': message.strip(),
+            }
+        except SyntaxError, e:
+            # todo: nice message to Insightly account owner about syntax error and don't fail to redirect to thank-you page
+            raise
+        except NameError, e:
+            # todo: nice message to Insightly user about missing line and don't fail to redirect
+            raise
+        return
+
+
+    def _send_thank_you_email(self, contact, contact_email):
         """
         Send a thank-you email to the contact
         :param contact_email:
         :param contact:
         """
 
-        # get data about the form
-        filename = '{directory}/{basename}.txt'.format(directory=self._form_data_directory, basename=form_name)
-        with open(filename, 'r') as f:
-            form_data = f.read()
-        try:
-            exec form_data
-            # url contains the thank-you page URL
-            # subject contains the email subject template
-            # message contains the email message template
-        except SyntaxError:
-            # todo: nice message to Insightly account owner and don't fail to redirect to thank-you page
-            raise
-
-        # create the email message
-        msg = MIMEText(message.format(first_name=contact['FIRST_NAME'], url=url))
+        msg = MIMEText(self._form_data['message'].format(first_name=contact['FIRST_NAME'], url=self._form_data['url']))
         to_list = [contact_email]
         msg['From'] = '{name} <{email}>'.format(name=self._account_owner['name'], email=self._account_owner['email'])
         msg['To'] = '{first_name} {last_name} <{email}>'.format(
             first_name=contact['FIRST_NAME'], last_name=contact['LAST_NAME'], email=contact_email
         )
-        msg['Subject'] = subject.format(first_name=contact['FIRST_NAME'])
+        msg['Subject'] = self._form_data['subject'].format(first_name=contact['FIRST_NAME'])
         s = smtplib.SMTP('localhost')
         s.sendmail(msg['From'], to_list, msg.as_string())
 
@@ -259,10 +275,10 @@ if '__main__' == __name__:
         'last_name': 'Hood',
         'phone': '636-447-3030',
         'website': 'www.hens-teeth.net',
-        'company': "Hen's Teeth Network",
+        'company': "Zemon Manufacturing",
         'comments': 'Can you build a website for me?\nAnd do it quick??',
         'form_name': 'TestForm1',
     }
-    lp = Landing_Page(nomail=True)
+    lp = Landing_Page(nomail=False)
     c = lp.do_form(form_fields)
     print str(c)
