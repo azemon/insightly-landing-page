@@ -1,10 +1,12 @@
-url: https://hens-teeth.net/thank-you/magnificent.html
+url = 'https://hens-teeth.net/thank-you/magnificent.html'
 
-thank you message:
-%FIRSTNAME,
+subject = 'Here is Your Magnificent Ebook'
+
+message = '''
+Hello {first_name},
 
 Thank you for requesting our magnificent ebook.
-You can download it from %URL
+You can download it from {url}
 
 If you have any questions, I am here to help you, 24x7.
 As they say in the biz, "here's a quarter; call someone who cares."
@@ -12,3 +14,4 @@ As they say in the biz, "here's a quarter; call someone who cares."
 Sincerely,
 A. Nony Mouse, CMO
 Rude Company, Inc.
+'''

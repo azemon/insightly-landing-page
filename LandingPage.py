@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 #
-# Author: Art Zemon art@hens-teeth.net
+# Author: Art Zemon art@zemon.name https://cheerfulcurmudgeon.com/
 # License: This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License http://creativecommons.org/licenses/by-sa/4.0/
 
+# todo: add company name to organization
+# todo: add a list of email domains for which organizations will not be created
 
 import datetime as dt
 import smtplib
@@ -10,7 +12,7 @@ from email.mime.text import MIMEText
 from InsightlyPython import insightly as Insightly
 
 
-class Landing_Page():
+class Landing_Page:
     """
     Support a form on a website landing page. When the form on the page gets submitted, do:
         1) if it does not exist, create an organization
@@ -24,16 +26,21 @@ class Landing_Page():
     _insightly = None
     _account_owner = None
 
+    _form_data_directory = 'forms'
 
-    def __init__(self):
+    # debugging flags
+    _no_notification_mail = False
+
+
+    def __init__(self, nomail=False):
         try:
-            f = open('apikey.txt', 'r')
-            apikey = f.read().rstrip()
-            f.close()
+            with open('apikey.txt', 'r') as f:
+                apikey = f.read().rstrip()
         except:
             raise Exception('Missing apikey.txt file')
         self._insightly = Insightly.Insightly(apikey=apikey, debug=False)
         self._account_owner = self._insightly.ownerinfo()
+        self._no_notification_mail = nomail
 
 
     def do_form(self, form_fields):
@@ -60,7 +67,7 @@ class Landing_Page():
 
         self._notify_users(contact, form_name)
 
-        self._thank_you_email(form_name)
+        self._send_thank_you_email(contact, email, form_name)
 
         return contact
 
@@ -69,8 +76,6 @@ class Landing_Page():
         """
         add a note to a contact
         :param contact_id:
-        :param title:
-        :param body:
         :return: note
         """
         title = 'Submitted form ' + form_name + ' at ' + dt.datetime.today().strftime("%m/%d/%Y %I:%M:%S%p %Z")
@@ -122,22 +127,53 @@ class Landing_Page():
         :param users:
         :return: None
         """
-        msg = MIMEText('''Contact %s %s submitted form %s. Be sure to check it out.''' % (contact['FIRST_NAME'], contact['LAST_NAME'], form_name))
+        msg = MIMEText('''Contact %s %s submitted form %s. Be sure to check it out.''' %
+                       (contact['FIRST_NAME'], contact['LAST_NAME'], form_name))
         to_list = []
         for u in self._insightly.users:
             to_list.append(u['EMAIL_ADDRESS'])
-        msg['From'] = self._account_owner['email']
+        msg['From'] = '{name} <{email}>'.format(name=self._account_owner['name'], email=self._account_owner['email'])
         msg['To'] = ', '.join(to_list)
-        msg['Subject'] = 'Form submission: %s' % form_name
+        msg['Subject'] = 'Form {form_name} submitted by {first_name} {last_name}'.format(
+            form_name=form_name, first_name=contact['FIRST_NAME'], last_name=contact['LAST_NAME']
+        )
         s = smtplib.SMTP('localhost')
-        s.sendmail(msg['From'], to_list, msg.as_string())
+        if not self._no_notification_mail:
+            s.sendmail(msg['From'], to_list, msg.as_string())
         s.quit()
 
 
-    def _thank_you_email(self, form_name):
+    def _send_thank_you_email(self, contact, contact_email, form_name):
         """
         Send a thank-you email to the contact
+        :param contact_email:
+        :param contact:
         """
+
+        # get data about the form
+        filename = '{directory}/{basename}.txt'.format(directory=self._form_data_directory, basename=form_name)
+        with open(filename, 'r') as f:
+            form_data = f.read()
+        try:
+            exec form_data
+            # url contains the thank-you page URL
+            # subject contains the email subject template
+            # message contains the email message template
+        except SyntaxError:
+            # todo: nice message to Insightly account owner and don't fail to redirect to thank-you page
+            raise
+
+        # create the email message
+        msg = MIMEText(message.format(first_name=contact['FIRST_NAME'], url=url))
+        to_list = [contact_email]
+        msg['From'] = '{name} <{email}>'.format(name=self._account_owner['name'], email=self._account_owner['email'])
+        msg['To'] = '{first_name} {last_name} <{email}>'.format(
+            first_name=contact['FIRST_NAME'], last_name=contact['LAST_NAME'], email=contact_email
+        )
+        msg['Subject'] = subject.format(first_name=contact['FIRST_NAME'])
+        s = smtplib.SMTP('localhost')
+        s.sendmail(msg['From'], to_list, msg.as_string())
+
         return
 
 
@@ -218,7 +254,7 @@ class Landing_Page():
 
 if '__main__' == __name__:
     form_fields = {
-        'email': '3art@pigasus.com',
+        'email': 'art@zemon.name',
         'first_name': 'Robin',
         'last_name': 'Hood',
         'phone': '636-447-3030',
@@ -227,6 +263,6 @@ if '__main__' == __name__:
         'comments': 'Can you build a website for me?\nAnd do it quick??',
         'form_name': 'TestForm1',
     }
-    lp = Landing_Page()
+    lp = Landing_Page(nomail=True)
     c = lp.do_form(form_fields)
     print str(c)
