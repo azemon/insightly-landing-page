@@ -19,7 +19,7 @@ class Landing_Page:
         3) add a note to the contact, indicating which form was submitting
         4) notify all Insightly users
         5) send a thank-you email to the form submitter
-        6) redirect the browser to the thank-you page URL
+        6) return the URL of the thank-you page
     """
 
     _insightly = None
@@ -49,7 +49,7 @@ class Landing_Page:
         If there is a form field named "form_name" then it appears in the Note title
 
         :param form_fields: dictionary
-        :return: None
+        :return: URL of the thank-you page
         """
 
         # preserve original data (for logging) and pull out some key data
@@ -71,7 +71,7 @@ class Landing_Page:
 
         self._send_thank_you_email(contact, email)
 
-        return contact
+        return self._form_data['url']
 
 
     def _add_note(self, contact_id, form_name, original_form_fields):
@@ -280,5 +280,5 @@ if '__main__' == __name__:
         'form_name': 'TestForm1',
     }
     lp = Landing_Page(nomail=False)
-    c = lp.do_form(form_fields)
-    print str(c)
+    url = lp.do_form(form_fields)
+    print 'Redirect to {url}'.format(url=url)
