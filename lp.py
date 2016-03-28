@@ -27,7 +27,7 @@ for key in form.keys():
 
 if 0 < len(form_fields):
     form_fields['ip_address'] = cgi.escape(os.environ['REMOTE_ADDR'])
-    lp = Landing_Page(nomail=True)
+    lp = Landing_Page()
     url = lp.do_form(form_fields)
     print 'Location: ' + url
     print '\n'
