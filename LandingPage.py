@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 #
 # Author: Art Zemon art@zemon.name https://cheerfulcurmudgeon.com/
-# License: This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License http://creativecommons.org/licenses/by-sa/4.0/
-
-# todo: add a list of email domains for which organizations will not be created
+#
+# License: This work is licensed under a
+# Creative Commons Attribution-ShareAlike 4.0 International License http://creativecommons.org/licenses/by-sa/4.0/
 
 import datetime as dt
 import smtplib
 from email.mime.text import MIMEText
 from InsightlyPython import insightly as Insightly
+from FreeEmailProviders import FreeEmailProviders
 
 
 class Landing_Page:
@@ -61,7 +62,12 @@ class Landing_Page:
 
         self._read_form_data(form_name)
 
-        organization = self._get_organization(email, form_fields)
+        # do not set up organizations for free email accounts
+        (username, domain) = email.split('@')
+        if FreeEmailProviders.is_free(domain):
+            organization = None
+        else:
+            organization = self._get_organization(email, form_fields)
 
         contact = self._upsert_contact(email, form_fields, organization)
 
@@ -234,12 +240,14 @@ class Landing_Page:
                     'TAG_NAME': 'Web Contact',
                 }
             ],
-            "LINKS": [
+        }
+
+        if organization is not None:
+            object_graph['LINKS'] = [
                 {
                     "ORGANISATION_ID": organization["ORGANISATION_ID"],
                 }
-            ],
-        }
+            ]
 
         # construct a "background" string of any remaining values
         del values['first_name']
@@ -279,6 +287,6 @@ if '__main__' == __name__:
         'comments': 'Can you build a website for me?\nAnd do it quick??',
         'form_name': 'TestForm1',
     }
-    lp = Landing_Page(nomail=False)
+    lp = Landing_Page(nomail=True)
     url = lp.do_form(form_fields)
     print 'Redirect to {url}'.format(url=url)
