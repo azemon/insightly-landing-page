@@ -19,12 +19,13 @@ class Landing_Page:
         2) update/insert a contact and link to the organization
         3) add a note to the contact, indicating which form was submitting
         4) notify all Insightly users
-        5) send a thank-you email to the form submitter
+        5) send a thank-you email to the form submitter, and BCC it into Insightly
         6) return the URL of the thank-you page
     """
 
     _insightly = None
     _account_owner = None
+    _bcc = None
 
     _form_data_directory = 'forms'
     _form_data = None # will be a dict with elements: url, subject, message
@@ -42,6 +43,7 @@ class Landing_Page:
         self._insightly = Insightly.Insightly(apikey=apikey, debug=False)
         self._account_owner = self._insightly.ownerinfo()
         self._no_notification_mail = nomail
+        self._set_bcc_address()
 
 
     def do_form(self, form_fields):
@@ -188,14 +190,29 @@ class Landing_Page:
 
         msg = MIMEText(self._form_data['message'].format(first_name=contact['FIRST_NAME'], url=self._form_data['url']))
         to_list = [contact_email]
+        if self._bcc is not None:
+            to_list.append(self._bcc)
         msg['From'] = '{name} <{email}>'.format(name=self._account_owner['name'], email=self._account_owner['email'])
-        msg['To'] = '{first_name} {last_name} <{email}>'.format(
-            first_name=contact['FIRST_NAME'], last_name=contact['LAST_NAME'], email=contact_email
-        )
+        msg['To'] = '{first_name} {last_name} <{email}>'.format(first_name=contact['FIRST_NAME'],
+                                                                last_name=contact['LAST_NAME'],
+                                                                email=contact_email)
         msg['Subject'] = self._form_data['subject'].format(first_name=contact['FIRST_NAME'])
         s = smtplib.SMTP('localhost')
         s.sendmail(msg['From'], to_list, msg.as_string())
+        return
 
+
+    def _set_bcc_address(self):
+        """
+        calculates and stores the BCC address for linking email messages to a contact record
+        """
+        if self._account_owner is None:
+            return
+        user_list = self._insightly.read('users')
+        for user in user_list:
+            if user['CONTACT_ID'] == self._account_owner['contact_id']:
+                self._bcc = '{firstname}-{dropbox}@mailbox.insight.ly'.format(firstname=user['FIRST_NAME'].lower(),
+                                                                              dropbox=user['EMAIL_DROPBOX_IDENTIFIER'])
         return
 
 
