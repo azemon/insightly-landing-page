@@ -42,8 +42,8 @@ class Landing_Page:
             raise Exception('Missing apikey.txt file')
         self._insightly = Insightly.Insightly(apikey=apikey, debug=False)
         self._account_owner = self._insightly.ownerinfo()
+        self._bcc = self._account_owner['email_dropbox']
         self._no_notification_mail = nomail
-        self._set_bcc_address()
 
 
     def do_form(self, form_fields):
@@ -199,20 +199,6 @@ class Landing_Page:
         msg['Subject'] = self._form_data['subject'].format(first_name=contact['FIRST_NAME'])
         s = smtplib.SMTP('localhost')
         s.sendmail(msg['From'], to_list, msg.as_string())
-        return
-
-
-    def _set_bcc_address(self):
-        """
-        calculates and stores the BCC address for linking email messages to a contact record
-        """
-        if self._account_owner is None:
-            return
-        user_list = self._insightly.read('users')
-        for user in user_list:
-            if user['CONTACT_ID'] == self._account_owner['contact_id']:
-                self._bcc = '{firstname}-{dropbox}@mailbox.insight.ly'.format(firstname=user['FIRST_NAME'].lower(),
-                                                                              dropbox=user['EMAIL_DROPBOX_IDENTIFIER'])
         return
 
 
