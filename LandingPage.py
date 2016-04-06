@@ -51,9 +51,12 @@ class Landing_Page:
         process the form from a landing page.
         If there is a form field named "form_name" then it appears in the Note title
 
-        :param form_fields: dictionary
+        :param form_fields: dictionary. Required elements: email, first_name, last_name
         :return: URL of the thank-you page
         """
+
+        if 'email' not in form_fields or 'first_name' not in form_fields or 'last_name' not in form_fields:
+            raise KeyError('Required fields: email, first_name, last_name')
 
         # preserve original data (for logging) and pull out some key data
         original_form_fields = form_fields.copy()
@@ -281,7 +284,7 @@ class Landing_Page:
 
 if '__main__' == __name__:
     form_fields = {
-        'email': 'art@zemon.name',
+        'xemail': 'art@zemon.name',
         'first_name': 'Robin',
         'last_name': 'Hood',
         'phone': '636-447-3030',

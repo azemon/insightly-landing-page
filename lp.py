@@ -22,15 +22,21 @@ form_fields = dict()
 for key in form.keys():
     fieldname = str(key)
     value = str(form.getvalue(fieldname))
-    #print '{key} {value}<br>'.format(key=fieldname, value=value)
     form_fields[fieldname] = value
 
 if 0 < len(form_fields):
     form_fields['ip_address'] = cgi.escape(os.environ['REMOTE_ADDR'])
     lp = Landing_Page()
-    url = lp.do_form(form_fields)
-    print 'Location: ' + url
-    print '\n'
-    print 'Redirecting to: ' + url
+    try:
+        url = lp.do_form(form_fields)
+        print 'Location: ' + url
+        print '\n'
+        print 'Redirecting to: ' + url
+    except KeyError, e:
+        print '\n'
+        print '<html><head><title>Error</title></head><body>'
+        print '<p>Missing field(s): email, first_name, or last_name</p>'
+        print '<p>Press BACK and try again</p>'
+        print '</body></html>'
 else:
     print '\nError: This script can only be called from a form'
