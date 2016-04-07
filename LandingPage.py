@@ -21,7 +21,8 @@ class Landing_Page:
         2) update/insert a contact and link to the organization
         3) add a note to the contact, indicating which form was submitting
         4) notify all Insightly users
-        5) send a thank-you email to the form submitter, and BCC it into Insightly
+        5) send a thank-you email to the form submitter, and BCC it into Insightly (as long as both the subject line
+           and body are defined)
         6) return the URL of the thank-you page
     """
 
@@ -169,8 +170,8 @@ class Landing_Page:
             # message contains the email message template
             self._form_data = {
                 'url': url.strip(),
-                'subject': subject.strip(),
-                'message': message.strip(),
+                'subject': subject,
+                'message': message,
             }
         except SyntaxError, e:
             # todo: nice message to Insightly account owner about syntax error and don't fail to redirect to thank-you page
@@ -188,7 +189,10 @@ class Landing_Page:
         :param contact:
         """
 
-        msg = MIMEText(self._form_data['message'].format(first_name=contact['FIRST_NAME'], url=self._form_data['url']))
+        if self._form_data['message'] is None or self._form_data['subject'] is None:
+            return
+
+        msg = MIMEText(self._form_data['message'].strip().format(first_name=contact['FIRST_NAME'], url=self._form_data['url']))
         to_list = [contact_email]
         if self._bcc is not None:
             to_list.append(self._bcc)
@@ -196,7 +200,7 @@ class Landing_Page:
         msg['To'] = '{first_name} {last_name} <{email}>'.format(first_name=contact['FIRST_NAME'],
                                                                 last_name=contact['LAST_NAME'],
                                                                 email=contact_email)
-        msg['Subject'] = self._form_data['subject'].format(first_name=contact['FIRST_NAME'])
+        msg['Subject'] = self._form_data['subject'].strip().format(first_name=contact['FIRST_NAME'])
         s = smtplib.SMTP('localhost')
         s.sendmail(msg['From'], to_list, msg.as_string())
         return

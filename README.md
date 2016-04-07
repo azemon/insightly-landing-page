@@ -7,7 +7,7 @@ When the form is submitted, the module does the following:
 1. update/insert a contact and link to the organization
 1. add a note to the contact, indicating which form was submitted
 1. notify all Insightly users
-1. send a thank-you email to the form submitter
+1. send a thank-you email to the form submitter (as long as both the message's subject and body are defined)
 1. redirect the browser to the thank-you page URL
 
 I am not associated with [Insightly, Inc.](https://www.insightly.com/), other than as a user of their CRM.

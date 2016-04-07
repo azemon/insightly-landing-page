@@ -33,6 +33,8 @@ form_fields['ip_address'] = cgi.escape(os.environ['REMOTE_ADDR'])
 if recaptcha_secretkey is not None:
     if 'g-recaptcha-response' in form_fields.keys():
         results = recaptcha.check(form_fields['g-recaptcha-response'], form_fields['ip_address'])
+        # don't pass on the reCAPTCHA data; no one else cares about it
+        del form_fields['g-recaptcha-response']
     else:
         results = False
     if False == results:
