@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sample Form</title>
+    <style type="text/css">
+        label {display: block; margin: 5px 0;}
+    </style>
+
+    <!--
+        only include this line if your site does not already have jQuery
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.3/jquery.min.js"></script>
+    -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.15.0/jquery.validate.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.15.0/additional-methods.min.js"></script>
+
+    <script src='https://www.google.com/recaptcha/api.js'></script>
+
+</head>
+<body>
+    <p>This is a sample form which is compatible with this Landing Page CGI Script for Insightly. You won't put your forms here, in the cgi-bin directory, of course. You will put them inside your website.</p>
+
+    <form id="downloadform" action="/cgi-bin/landing-page/lp.py" method="post">
+
+        <!-- These four fields are required -->
+        <label>First name: <input type="text" name="first_name"></label>
+        <label>Last name: <input type="text" name="last_name"></label>
+        <label>Email: <input type="text" name="email"></label>
+        <input type="hidden" name="form_name" value="TestForm1">
+
+        <!-- add as many additional fields as you wish -->
+        <label>Company: <input type="text" name="company"></label>
+        <label>Comments: <textarea name="comments"></textarea></label>
+
+        <!-- the reCAPTCHA appears here -->
+        <div class="g-recaptcha" data-sitekey="YOUR-SITEKEY"></div>
+
+        <input type="submit" value="Download Ebook Now">
+    </form>
+
+    <script type="text/javascript">
+        jQuery("#downloadform").validate({
+            rules: {
+              first_name: { required: true },
+              last_name: { required: true },
+              email: { required: true, email: true }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -16,7 +16,10 @@ I am not associated with [Insightly, Inc.](https://www.insightly.com/), other th
 
 ### Installing & Configuring this Script ###
 
-Put your Insightly API key in a file named `apikey.txt` in the same directory as `LandingPage.py`
+Copy `config-sample.py` to `config.py` and edit it using any text editor (not Microsoft Word!).
+Insert your Insightly API key. 
+If you want to use [reCAPTCHA](https://www.google.com/recaptcha/), add your reCAPTCHA secret key. 
+If you do not want to use reCAPTCHA, set the value to "None" (without the quotation marks).
 
 ### Creating HTML Forms ###
 
@@ -56,6 +59,17 @@ You can see the list of domains for free email accounts in the file `FreeEmailPr
 *Note*
 
 * All form fields will also be logged into a Note, attached to the Contact.
+
+#### reCAPTCHA ####
+
+If you put your reCAPTCHA secret key into `config.py` then you must include reCAPTCHA in your forms.
+See `forms/SampleFormRecaptcha.html` for an example.
+
+#### Form Validation ####
+
+You can use any Javascript form validation mechanism that you like. See the file `forms/SampleFormValidation.html` for a simple technique.
+
+See `forms/SampleFormRecaptchaValidation.html` for an example that combines both reCAPTCHA and form validation.
 
 ### Creating Form Data Files ###
 

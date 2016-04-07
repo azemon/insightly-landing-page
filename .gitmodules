@@ -1,3 +1,6 @@
 [submodule "InsightlyPython"]
 	path = InsightlyPython
 	url = git@github.com:azemon/insightly-python.git
+[submodule "requests"]
+	path = requests
+	url = ./requests/

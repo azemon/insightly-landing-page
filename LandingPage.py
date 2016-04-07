@@ -11,6 +11,8 @@ from email.mime.text import MIMEText
 from InsightlyPython import insightly as Insightly
 from FreeEmailProviders import FreeEmailProviders
 
+from config import insightly_apikey
+
 
 class Landing_Page:
     """
@@ -35,12 +37,7 @@ class Landing_Page:
 
 
     def __init__(self, nomail=False):
-        try:
-            with open('apikey.txt', 'r') as f:
-                apikey = f.read().rstrip()
-        except:
-            raise Exception('Missing apikey.txt file')
-        self._insightly = Insightly.Insightly(apikey=apikey, debug=False)
+        self._insightly = Insightly.Insightly(apikey=insightly_apikey, debug=False)
         self._account_owner = self._insightly.ownerinfo()
         self._bcc = self._account_owner['email_dropbox']
         self._no_notification_mail = nomail

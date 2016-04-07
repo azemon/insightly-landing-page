@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sample Form with reCAPTCHA</title>
+    <style type="text/css">
+        label {display: block; margin: 5px 0;}
+    </style>
+
+    <script src='https://www.google.com/recaptcha/api.js'></script>
+
+</head>
+<body>
+    <p>This is a sample form which is compatible with this Landing Page CGI Script for Insightly. You won't put your forms here, in the cgi-bin directory, of course. You will put them inside your website.</p>
+
+    <form action="/cgi-bin/landing-page/recaptchatest.py" method="get">
+
+        <!-- These four fields are required -->
+        <label>First name: <input type="text" name="first_name"></label>
+        <label>Last name: <input type="text" name="last_name"></label>
+        <label>Email: <input type="text" name="email"></label>
+        <input type="hidden" name="form_name" value="TestForm1">
+
+        <!-- add as many additional fields as you wish -->
+        <label>Company: <input type="text" name="company"></label>
+        <label>Comments: <textarea name="comments"></textarea></label>
+
+        <!-- the reCAPTCHA appears here -->
+        <div class="g-recaptcha" data-sitekey="YOUR-SITEKEY"></div>
+
+        <input type="submit" value="Download Ebook Now">
+    </form>
+</body>
+</html>

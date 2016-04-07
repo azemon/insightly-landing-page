@@ -11,10 +11,14 @@ import cgi
 import cgitb
 cgitb.enable()
 
-print 'Content-type: text/html'
-
+import sys
 import os
+
+from config import recaptcha_secretkey
+import recaptcha
 from LandingPage import Landing_Page
+
+print 'Content-type: text/html'
 
 form = cgi.FieldStorage()
 form_fields = dict()
@@ -24,15 +28,28 @@ for key in form.keys():
     value = str(form.getvalue(fieldname))
     form_fields[fieldname] = value
 
-if 0 < len(form_fields):
-    form_fields['ip_address'] = cgi.escape(os.environ['REMOTE_ADDR'])
+form_fields['ip_address'] = cgi.escape(os.environ['REMOTE_ADDR'])
+
+if recaptcha_secretkey is not None:
+    if 'g-recaptcha-response' in form_fields.keys():
+        results = recaptcha.check(form_fields['g-recaptcha-response'], form_fields['ip_address'])
+    else:
+        results = False
+    if False == results:
+        print '\n'
+        print '<html><head><title>Error</title></head><body>'
+        print '<p>reCATPCHA failure. Only humans allowed.</p>'
+        print '</body></html>'
+        sys.exit(0)
+
+if 1 < len(form_fields):
     lp = Landing_Page()
     try:
         url = lp.do_form(form_fields)
         print 'Location: ' + url
         print '\n'
         print 'Redirecting to: ' + url
-    except KeyError, e:
+    except KeyError:
         print '\n'
         print '<html><head><title>Error</title></head><body>'
         print '<p>Missing field(s): email, first_name, or last_name</p>'
