@@ -7,6 +7,7 @@
 
 import datetime as dt
 import smtplib
+from email.header import Header
 from email.mime.text import MIMEText
 from InsightlyPython import insightly as Insightly
 from FreeEmailProviders import FreeEmailProviders
@@ -142,16 +143,25 @@ class Landing_Page:
         :param users:
         :return: None
         """
-        msg = MIMEText('''Contact %s %s submitted form %s. Be sure to check it out.''' %
-                       (contact['FIRST_NAME'], contact['LAST_NAME'], form_name))
+        msg = MIMEText(u'Contact {first} {last} submitted form {form}.'.format(first=contact['FIRST_NAME'],
+                                                                               last=contact['LAST_NAME'],
+                                                                               form=form_name),
+                       'plain', 'utf-8')
         to_list = []
         for u in self._insightly.users:
             to_list.append(u['EMAIL_ADDRESS'])
-        msg['From'] = '{name} <{email}>'.format(name=self._account_owner['name'], email=self._account_owner['email'])
+
+        # the printable name is UTF-8 but the <email@address> is ASCII
+        from_name = Header(self._account_owner['name'], 'utf-8')
+        msg['From'] = '{name} <{email}>'.format(name=from_name, email=self._account_owner['email'])
+
         msg['To'] = ', '.join(to_list)
-        msg['Subject'] = 'Form {form_name} submitted by {first_name} {last_name}'.format(
-            form_name=form_name, first_name=contact['FIRST_NAME'], last_name=contact['LAST_NAME']
-        )
+        subject = \
+            Header(u'Form {form_name} submitted by {first_name} {last_name}'.format(form_name=form_name,
+                                                                                    first_name=contact['FIRST_NAME'],
+                                                                                    last_name=contact['LAST_NAME']),
+                   'utf-8')
+        msg['Subject'] = subject
         s = smtplib.SMTP('localhost')
         if not self._no_notification_mail:
             s.sendmail(msg['From'], to_list, msg.as_string())
@@ -169,9 +179,9 @@ class Landing_Page:
             # subject contains the email subject template
             # message contains the email message template
             self._form_data = {
-                'url': url.strip(),
-                'subject': subject,
-                'message': message,
+                'url': unicode(url.strip()),
+                'subject': unicode(subject),
+                'message': unicode(message),
             }
         except SyntaxError, e:
             # todo: nice message to Insightly account owner about syntax error and don't fail to redirect to thank-you page
@@ -192,14 +202,23 @@ class Landing_Page:
         if self._form_data['message'] is None or self._form_data['subject'] is None:
             return
 
-        msg = MIMEText(self._form_data['message'].strip().format(first_name=contact['FIRST_NAME'], url=self._form_data['url']))
+        message = self._form_data['message'].strip().format(first_name=contact['FIRST_NAME'],
+                                                            url=self._form_data['url'])
+        msg = MIMEText(message, 'plain', 'utf-8')
         to_list = [contact_email]
         if self._bcc is not None:
             to_list.append(self._bcc)
-        msg['From'] = '{name} <{email}>'.format(name=self._account_owner['name'], email=self._account_owner['email'])
-        msg['To'] = '{first_name} {last_name} <{email}>'.format(first_name=contact['FIRST_NAME'],
-                                                                last_name=contact['LAST_NAME'],
-                                                                email=contact_email)
+
+        # the printable name is UTF-8 but the <email@address> is ASCII
+        from_name = Header(self._account_owner['name'], 'utf-8')
+        msg['From'] = '{name} <{email}>'.format(name=from_name, email=self._account_owner['email'])
+
+        # the printable name is UTF-8 but the <email@address> is ASCII
+        to_name = Header(u'{first_name} {last_name}'.format(first_name=contact['FIRST_NAME'],
+                                                            last_name=contact['LAST_NAME']),
+                         'utf-8')
+        msg['To'] = '{name} <{address}>'.format(name=to_name, address=contact_email)
+
         msg['Subject'] = self._form_data['subject'].strip().format(first_name=contact['FIRST_NAME'])
         s = smtplib.SMTP('localhost')
         s.sendmail(msg['From'], to_list, msg.as_string())
@@ -215,12 +234,12 @@ class Landing_Page:
         """
         contacts = self._insightly.read('contacts', top=2, filters={'email': email})
         contactinfos = [
-                {
-                    'TYPE': 'EMAIL',
-                    'LABEL': 'Work',
-                    'DETAIL': email,
-                }
-            ]
+            {
+                'TYPE': 'EMAIL',
+                'LABEL': 'Work',
+                'DETAIL': email,
+            }
+        ]
 
         if 'phone' in values:
             contactinfos.append({
@@ -285,15 +304,15 @@ class Landing_Page:
 
 if '__main__' == __name__:
     form_fields = {
-        'xemail': 'art@zemon.name',
-        'first_name': 'Robin',
-        'last_name': 'Hood',
-        'phone': '636-447-3030',
-        'website': 'www.hens-teeth.net',
-        'company': "Zemon Manufacturing",
-        'comments': 'Can you build a website for me?\nAnd do it quick??',
-        'form_name': 'TestForm1',
+        'email': u'art@zemon.name',
+        'first_name': u'R\u00f6bin',
+        'last_name': u'Hood',
+        'phone': u'636-447-3030',
+        'website': u'www.hens-teeth.net',
+        'company': u"Zemon Manufacturing",
+        'comments': u'Can you build a website for me?\nAnd do it quick??',
+        'form_name': u'TestForm1',
     }
     lp = Landing_Page(nomail=True)
     url = lp.do_form(form_fields)
-    print 'Redirect to {url}'.format(url=url)
+    print u'Redirect to {url}'.format(url=url)
