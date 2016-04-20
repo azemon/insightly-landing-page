@@ -25,7 +25,7 @@ form_fields = dict()
 
 for key in form.keys():
     fieldname = str(key)
-    value = str(form.getvalue(fieldname))
+    value = form.getvalue(fieldname).decode('utf8')
     form_fields[fieldname] = value
 
 form_fields['ip_address'] = cgi.escape(os.environ['REMOTE_ADDR'])
