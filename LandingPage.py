@@ -135,6 +135,24 @@ class Landing_Page:
             organization = organization[0]
         return organization
 
+    def _notify_error(self, message):
+        """
+        notify all Insightly users about an error
+        :param message:
+        :return: None
+        """
+        msg = MIMEText(unicode(message), 'plain', 'utf-8')
+        to_list = []
+        for u in self._insightly.users:
+            to_list.append(u['EMAIL_ADDRESS'])
+
+        msg['From'] = self._account_owner['email']
+        msg['To'] = ', '.join(to_list)
+        msg['Subject'] = 'Landing page error'
+        s = smtplib.SMTP('localhost')
+        if not self._no_notification_mail:
+            s.sendmail(msg['From'], to_list, msg.as_string())
+        s.quit()
 
     def _notify_users(self, contact, form_name):
         """
@@ -167,7 +185,6 @@ class Landing_Page:
             s.sendmail(msg['From'], to_list, msg.as_string())
         s.quit()
 
-
     def _read_form_data(self, form_name):
         # get data about the form
         filename = '{directory}/{basename}.txt'.format(directory=self._form_data_directory, basename=form_name)
@@ -183,12 +200,17 @@ class Landing_Page:
                 'subject': unicode(subject),
                 'message': unicode(message),
             }
-        except SyntaxError, e:
-            # todo: nice message to Insightly account owner about syntax error and don't fail to redirect to thank-you page
-            raise
-        except NameError, e:
-            # todo: nice message to Insightly user about missing line and don't fail to redirect
-            raise
+        except SyntaxError as se:
+            message = 'Syntax error in file {file}, line {line}, offset {offset}\n{msg}'.format(file=filename,
+                                                                                                line=se.lineno,
+                                                                                                offset=se.offset,
+                                                                                                msg=se.msg)
+            self._notify_error(message)
+            raise Exception('Error: form not submitted [1]')
+        except NameError as ne:
+            message = 'Name error in file {file}\n{msg}'.format(file=filename, msg=ne.message)
+            self._notify_error(message)
+            raise Exception('Error: form not submitted [2]')
         return
 
 
