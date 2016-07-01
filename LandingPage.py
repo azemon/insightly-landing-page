@@ -285,7 +285,7 @@ class Landing_Page:
             'CONTACTINFOS': contactinfos,
             'TAGS': [
                 {
-                    'TAG_NAME': 'Web Contact',
+                    'TAG_NAME': 'Web_Contact',
                 }
             ],
         }
