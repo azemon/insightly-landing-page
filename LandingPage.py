@@ -158,7 +158,7 @@ class Landing_Page:
         """
         notify all Insightly users about the form submissions
         :param contact:
-        :param users:
+        :param form_name:
         :return: None
         """
         msg = MIMEText(u'Contact {first} {last} submitted form {form}.'.format(first=contact['FIRST_NAME'],
@@ -197,8 +197,8 @@ class Landing_Page:
             # message contains the email message template
             self._form_data = {
                 'url': unicode(url.strip()),
-                'subject': unicode(subject),
-                'message': unicode(message),
+                'subject': self.unicode_or_none(subject),
+                'message': self.unicode_or_none(message),
             }
         except SyntaxError as se:
             message = 'Syntax error in file {file}, line {line}, offset {offset}\n{msg}'.format(file=filename,
@@ -245,6 +245,13 @@ class Landing_Page:
         s = smtplib.SMTP('localhost')
         s.sendmail(msg['From'], to_list, msg.as_string())
         return
+
+
+    @staticmethod
+    def unicode_or_none(string):
+        if string is not None:
+            string = unicode(string)
+        return string
 
 
     def _upsert_contact(self, email, values, organization):

@@ -9,7 +9,7 @@
 
 import cgi
 import cgitb
-cgitb.enable()
+cgitb.enable(display=0, logdir='/var/tmp')
 
 import sys
 import os
